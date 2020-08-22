@@ -22,7 +22,8 @@ defmodule Chip8Web.PageLive do
         roms: ROMs.list_roms(),
         rom: nil,
         last_cycle: nil,
-        running: false
+        running: false,
+        soundcard_emit: false
       )
 
     {:ok, socket}
@@ -49,6 +50,7 @@ defmodule Chip8Web.PageLive do
       socket
       |> assign(:emulator, emulator)
       |> assign(:rom, rom)
+      |> push_event("soundcard_init", %{})
 
     {:noreply, socket}
   end
@@ -136,6 +138,7 @@ defmodule Chip8Web.PageLive do
       socket
       |> assign(:emulator, emulator)
       |> assign(:last_cycle, now)
+      |> handle_sound()
 
     {:noreply, socket}
   end
@@ -162,6 +165,27 @@ defmodule Chip8Web.PageLive do
     |> Emulator.registers()
     |> RegisterFile.get_data_register(register)
     |> to_hex_string()
+  end
+
+  defp handle_sound(socket) do
+    already_emitting? = socket.assigns.soundcard_emit
+    now_emitting? = Emulator.emitting_sound?(socket.assigns.emulator)
+
+    signal_emit = fn value ->
+      socket
+      |> assign(:soundcard_emit, value)
+      |> push_event("soundcard_emit", %{value: value})
+    end
+
+    case {already_emitting?, now_emitting?} do
+      {true, false} ->
+        signal_emit.(false)
+      {false, true} ->
+        signal_emit.(true)
+      _ ->
+        socket
+        |> assign(:soundcard_emit, already_emitting?)
+    end
   end
 
   defp list_stack_addresses(%Emulator{} = emulator) do

@@ -64,4 +64,13 @@ defmodule Chip8.Emulator do
 
     :chip8@emulator.disassemble_instructions(record, length)
   end
+
+  def emitting_sound?(%Emulator{} = emulator) do
+    sound_timer =
+      emulator
+      |> registers()
+      |> Map.fetch!(:sound_timer)
+
+    sound_timer > 0
+  end
 end

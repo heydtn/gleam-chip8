@@ -23,20 +23,22 @@ const createAudio = () => {
 
 Hooks.SoundCard = {
     mounted() {
-        this.synth = createAudio();
-        this.handleEvent("soundcard_emit", emit => {
-            if (emit) {
-                this.synth.on();
+        this.handleEvent("soundcard_init", () => {
+            this.synth = this.synth || createAudio();
+        })
+        this.handleEvent("soundcard_emit", ({value}) => {
+            if (value) {
+                this.synth?.on();
             } else {
-                this.synth.off();
+                this.synth?.off();
             }
         });
     },
     beforeDestroy() {
-        this.synth.close();
+        this.synth?.close();
     },
     disconnected() {
-        this.synth.off();
+        this.synth?.off();
     }
 }
 
